@@ -30,7 +30,7 @@ We'll fix this by **intercepting attempts to run 32-bit executables** and runnin
 
 ### Setup
 
-- First, [install an up-to-date snappy system](https://developer.ubuntu.com/snappy/install) (on real hardware if you're going to be trying the Mir examples, otherwise a virtual machine is fine).
+- First, [install an up-to-date snappy system](https://developer.ubuntu.com/snappy/install).  You can easily get the latest snappy image with the following command: `sudo ubuntu-device-flash core -o snappy.img`
 - Then make sure you have deb2snap on your own development machine: `bzr branch lp:deb2snap`.
 - And you'll probably want to connect to your snappy machine with `ssh`, especially if you're going to be running any Mir apps that will take over the screen.
 - Remember to run `export LC_ALL=C.UTF-8` in your `ssh` terminal.  Ubuntu Snappy doesn't have all locales yet and ssh may have ported over your local locale setting.
@@ -81,7 +81,7 @@ Pointing at a script is especially useful if you need to do some minor setup bef
 
 #### Mir server snap
 
-Mir apps need a server that has access to the input and video hardware.  For these bits, you'll need an actual physical machine (not a VM) and a Mir framework snap.
+Mir apps need a Mir server that has access to the input and video hardware.  For these examples, you'll need an actual physical machine (not a VM) and a Mir framework snap.
 
 The latter is easy enough:
 
