@@ -110,6 +110,11 @@ function get_pkgs_from_ldd()
     get_pkg_for_file $FILES
 }
 
+if ! [ -e ./builddir ]; then
+    echo "Looks like you haven't run make yet, doing it for you"
+    make
+fi
+
 if [ -z "$COMMANDS" ]; then
     echo "You must provide a command to include in the snap"
     exit 1

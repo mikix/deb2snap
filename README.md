@@ -30,9 +30,10 @@ We'll fix this by **intercepting attempts to run 32-bit executables** and runnin
 
 ### Setup
 
-- First, [install an up-to-date snappy system](https://developer.ubuntu.com/snappy) (on real hardware if you're going to be trying the Mir examples, otherwise a virtual machine is fine).
-- Then make sure you have deb2snap on your own development machine: `bzr branch lp:deb2snap`
+- First, [install an up-to-date snappy system](https://developer.ubuntu.com/snappy/install) (on real hardware if you're going to be trying the Mir examples, otherwise a virtual machine is fine).
+- Then make sure you have deb2snap on your own development machine: `bzr branch lp:deb2snap`.
 - And you'll probably want to connect to your snappy machine with `ssh`, especially if you're going to be running any Mir apps that will take over the screen.
+- Remember to run `export LC_ALL=C.UTF-8` in your `ssh` terminal.  Ubuntu Snappy doesn't have all locales yet and ssh may have ported over your local locale setting.
 
 ### Commandline app
 
@@ -88,10 +89,12 @@ The latter is easy enough:
     cd snappy-packaging
     make
 
-And you'll have a `mir` snap sitting in your current directory.  Install this on your machine and you can start and stop the system compositor service like so (assuming the version of the snap is 0):
+And you'll have a `mir` snap sitting in your current directory.  Install this on your machine and Mir will immediately start (and take over your screen!).  You should see a cursor on a black background.
 
-    sudo systemctl start mir_system-compositor_0
+You can stop and start the system compositor service like so (assuming the version of the snap is 0):
+
     sudo systemctl stop mir_system-compositor_0
+    sudo systemctl start mir_system-compositor_0
 
 Your app can connect to the system compositor by wrapping itself with a call to `/apps/mir/current/bin/mir-run`.  But you don't need to worry about that, `deb2snap` will do it for you.
 
@@ -120,14 +123,14 @@ There are two versions of Xmir: the one in the archive right now which works as 
 The former (**Xmir Legacy**) is easier to bundle into a snap because it's in the archive already.  But it has some notable bugs: you'll have graphical glitches around your cursor, you'll see a second cursor on the screen, and you'll need to run your app as root.  Build it into your snap like so:
 
     ./deb2snap -d 15.04/beta-2 --xmir xfreerdp
+    # copy and install snap into snappy machine
+    sudo /apps/bin/xfreerdp.freerdp-x11 /f /v:SERVER /u:USER /p:PASSWORD
 
 The latter (**Xmir Next**) is difficult to bundle in because you'll need to build it yourself (see below).  But it fixes the above bugs.
 
     ./deb2snap -d 15.04/beta-2 --xmir-binary ~/Xmir xfreerdp
-
-With either approach installed on your snappy machine, your can connect to a remote RDP server as easily as:
-
-    xfreerdp.freerdp-x11 /v:SERVER /u:USER /p:PASSWORD
+    # copy and install snap into snappy machine
+    xfreerdp.freerdp-x11 /f /v:SERVER /u:USER /p:PASSWORD
 
 #### Building Xmir Next
 
@@ -135,7 +138,7 @@ With either approach installed on your snappy machine, your can connect to a rem
     cd xserver
     sudo apt-get build-dep xorg-server
     debian/rules build
-    cp ./build-main/hw/xmir/Xmir ~/Xmir
+    cp ./build-main/hw/xmir/Xmir ~/
 
 Hopefully it will be in the archive soon.
 
