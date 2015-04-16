@@ -36,7 +36,7 @@ We'll fix this by **intercepting attempts to run 32-bit executables** and runnin
 
 And finally build deb2snap:
 
-    sudo apt-get install cmake libc6-dev libc6-dev-i386
+    sudo apt-get install cmake gcc-multilib
     bzr branch lp:deb2snap
     cd deb2snap
     make
