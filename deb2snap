@@ -1,0 +1,292 @@
+#!/bin/bash
+# -*- Mode: sh; indent-tabs-mode: nil; tab-width: 4 -*-
+#
+# Copyright (C) 2015 Canonical, Ltd.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; version 3.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+set -e
+
+ARCH=
+DESCRIPTION="A custom command"
+MIR=false
+SHIP32=false
+VERBOSE=false
+XMIR=false
+XMIREXEC=
+
+while [[ $# > 0 ]]
+do
+key="$1"
+
+case $key in
+    --32)
+    SHIP32=true
+    PACKAGES="$PACKAGES libc6:i386"
+    ;;
+    --aa-template)
+    AA_TEMPLATE="$2"
+    shift
+    ;;
+    --arch)
+    ARCH="$2"
+    shift
+    ;;
+    --desc)
+    DESCRIPTION="$2"
+    shift
+    ;;
+    -d|--distro)
+    DISTRO="$2"
+    shift
+    ;;
+    --mir)
+    MIR=true
+    ;;
+    -n|--name)
+    PACKAGE_NAME="$2"
+    shift
+    ;;
+    --overlay)
+    OVERLAY_DIR="$2"
+    shift
+    ;;
+    -p|--package)
+    PACKAGES="$PACKAGES $2"
+    shift
+    ;;
+    --vendor)
+    VENDOR="vendor: \"$2\""
+    shift
+    ;;
+    --verbose)
+    VERBOSE=true
+    ;;
+    -v|--version)
+    VERSION="$2"
+    shift
+    ;;
+    --xmir-binary)
+    XMIR=true
+    XMIREXEC="$2"
+    shift
+    ;;
+    --xmir)
+    XMIR=true
+    ;;
+    *)
+    if [ -e $1 ]; then
+        COMMAND=$(readlink -e $1)
+    elif which $1 >/dev/null; then
+        COMMAND=$(which $1)
+    else
+        echo "Unknown command $1"
+        exit 1
+    fi
+    COMMANDS="$COMMANDS $COMMAND"
+    ;;
+esac
+shift
+done
+
+function get_pkg_for_file()
+{
+    dpkg -S $@ 2>/dev/null | sed 's/: .*//'
+}
+
+function get_pkgs_from_ldd()
+{
+    FILES=$(ldd $1 | grep '=> /' | cut -d' ' -f3)
+    get_pkg_for_file $FILES
+}
+
+if [ -z "$COMMANDS" ]; then
+    echo "You must provide a command to include in the snap"
+    exit 1
+fi
+
+for COMMAND in $COMMANDS; do
+    CMD_PACKAGE=$(get_pkg_for_file $COMMAND)
+    if [ -n "$CMD_PACKAGE" ]; then
+        PACKAGES="$PACKAGES $CMD_PACKAGE"
+    fi
+done
+
+COMMANDS_LEN=$(echo $COMMANDS | wc -w)
+if [ $COMMANDS_LEN -gt 1 ]; then
+    CMD_PACKAGE=
+fi
+
+if [ -z "$ARCH" ]; then
+    ARCH=$(dpkg-architecture -qDEB_HOST_ARCH)
+fi
+
+if [ -z "$PACKAGE_NAME" ]; then
+    if [ -z "$CMD_PACKAGE" ]; then
+        echo "No package name specified"
+        exit 1
+    fi
+    PACKAGE_NAME=$CMD_PACKAGE
+fi
+
+if [ -z "$VERSION" ]; then
+    if [ -z "$CMD_PACKAGE" ]; then
+        echo "No version specified"
+        exit 1
+    fi
+    VERSION=$(apt-cache policy $CMD_PACKAGE | grep '\*\*\*' | cut -d' ' -f3)
+fi
+VERSION=$(echo $VERSION | tr ':' '-') # ':' in paths will confuse LD_PRELOAD
+
+ROOT=$(mktemp -dt snap.XXXXXXXXXX)
+mkdir -p $ROOT/bin $ROOT/meta
+
+if $XMIR; then
+    if [ -n "$XMIREXEC" ]; then
+        # Xmir 2.0!  Whole different way of calling it.
+        # Just for ease, include more than we *need* by grabbing all of xorg
+        PACKAGES="xorg $(get_pkgs_from_ldd $XMIREXEC) $PACKAGES"
+        cp -p ./tools/xmir2-run $ROOT/bin/_xmir-run
+        cp -p "$XMIREXEC" $ROOT/bin/_Xmir
+    else
+        PACKAGES="xorg xserver-xorg-xmir $PACKAGES"
+        cp -p ./tools/xmir-run $ROOT/bin/_xmir-run
+        if [ -n "AA_TEMPLATE" ]; then
+            AA_TEMPLATE="unconfined"
+            echo "Using an unconfined AppArmor template, because Xmir requires it"
+        fi
+    fi
+fi
+
+# This grabs all the current system's ld.so.conf entries as reported by
+# ldconfig and prepends our new root prefix to each of them.
+# Unfortunately, we lose the ordering when we sort.  We also grab directories
+# we end up not caring about (from other packages installed on the system).
+# Is there a cleaner way to do this?
+LDPATHS=$(ldconfig --print-cache | grep ' => /' | sed 's|^.* => \(/[^ ]*\)/[^/ ]*.*$|\1|g' | sort -r | uniq | tr '\n' : | sed "s=^=/apps/$PACKAGE_NAME/$VERSION/debs=;s=:/=:/apps/$PACKAGE_NAME/$VERSION/debs/=g")
+
+mkdir -p $ROOT/lib64
+cp -p ./builddir/src/libsnappypreload64.so $ROOT/lib64/libsnappypreload.so
+LDPRELOAD=/apps/$PACKAGE_NAME/$VERSION/lib64/libsnappypreload.so
+
+if $SHIP32; then
+    mkdir -p $ROOT/lib32
+    cp -p ./builddir/src/libsnappypreload32.so $ROOT/lib32/libsnappypreload.so
+    LDPRELOAD=$LDPRELOAD:/apps/$PACKAGE_NAME/$VERSION/lib32/libsnappypreload.so
+fi
+
+for COMMAND in $COMMANDS; do
+    SHORT_COMMAND=$(basename $COMMAND | tr '_' '-') # snappy doesn't allow underscores
+    cp -p $COMMAND $ROOT/bin/$SHORT_COMMAND.real
+    chmod a+x $ROOT/bin/$SHORT_COMMAND.real
+
+    if [ "$(file -b --mime-encoding $COMMAND)" = "binary" ]; then
+        PACKAGES="$PACKAGES $(get_pkgs_from_ldd $COMMAND)"
+    fi
+
+    CAPS=
+    WRAPPER_COMMAND="/apps/$PACKAGE_NAME/$VERSION/bin/$SHORT_COMMAND.real"
+
+    if $MIR; then
+        WRAPPER_COMMAND="/apps/mir/current/bin/mir-run $WRAPPER_COMMAND"
+# A snappy bug prevents us from depending on a framework yet
+#       FRAMEWORKS="${FRAMEWORKS}
+# - mir"
+        CAPS="${CAPS}
+    - mir_client"
+    fi
+
+    if $XMIR; then
+        WRAPPER_COMMAND="/apps/$PACKAGE_NAME/$VERSION/bin/_xmir-run $WRAPPER_COMMAND"
+# A snappy bug prevents us from depending on a framework yet
+#       FRAMEWORKS="${FRAMEWORKS}
+# - mir"
+        CAPS="${CAPS}
+    - mir_client"
+    fi
+
+    sed "s|@PACKAGE@|$PACKAGE_NAME|g;s|@VERSION@|$VERSION|g;s|@COMMAND@|$WRAPPER_COMMAND|g;s|@LDPATHS@|$LDPATHS|g;s|@LDPRELOAD@|$LDPRELOAD|g" ./tools/wrapper.in > $ROOT/bin/$SHORT_COMMAND
+    chmod a+x $ROOT/bin/$SHORT_COMMAND
+
+    YAML_BINARIES="$YAML_BINARIES
+ - name: bin/$SHORT_COMMAND"
+
+    if [ -n "$CAPS" ]; then
+        # networking is added by default if no caps are specified, so don't regress that
+        YAML_BINARIES="$YAML_BINARIES
+   caps:
+    - networking$CAPS"
+    fi
+
+    if [ -n "$AA_TEMPLATE" ]; then
+        YAML_BINARIES="$YAML_BINARIES
+   security-template: $AA_TEMPLATE"
+    fi
+done
+
+if [ -n "$FRAMEWORKS" ]; then
+    YAML_FRAMEWORKS="frameworks:$FRAMEWORKS"
+fi
+
+cat > $ROOT/meta/package.yaml <<EOF
+name: $PACKAGE_NAME
+version: $VERSION
+$VENDOR
+architecture: $ARCH
+$YAML_FRAMEWORKS
+binaries:$YAML_BINARIES
+EOF
+
+if [ -n "$CMD_PACKAGE" ]; then
+    apt-cache show $CMD_PACKAGE | grep '^Description' | head -n 1 | cut -d: -f2 | sed 's/^ //' > $ROOT/meta/readme.md
+else
+    echo "$DESCRIPTION" > $ROOT/meta/readme.md
+fi
+
+if [ -n "$PACKAGES" ]; then
+    if [ -n "$DISTRO" ]; then
+        DOWNLOAD_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/snappy-preload/manifests"
+        DISTRO_FILEPART=${DISTRO//-}
+        DISTRO_FILEPART=${DISTRO_FILEPART//\//-}
+        MANIFEST_FILE="ubuntu-core-$DISTRO_FILEPART-core-$ARCH.manifest"
+        if [ ! -r "$DOWNLOAD_DIR/$MANIFEST_FILE" ]; then
+            mkdir -p "$DOWNLOAD_DIR"
+            DISTRO_URLPART=$DISTRO
+            if [ "${DISTRO##*/}" = "$DISTRO" ]; then # that means no release was specified
+                DISTRO_URLPART=$DISTRO/release
+            fi
+            wget --quiet -N http://cdimage.ubuntu.com/ubuntu-core/releases/$DISTRO_URLPART/$MANIFEST_FILE -P "$DOWNLOAD_DIR"
+        fi
+        MANIFEST_ARG="--manifest $DOWNLOAD_DIR/$MANIFEST_FILE"
+    fi
+    ./tools/dep-tree $MANIFEST_ARG $PACKAGES | xargs ./tools/copy-deb $ROOT/debs
+fi
+
+./tools/fixes "$ROOT" $PACKAGE_NAME $VERSION
+
+if [ -n "$OVERLAY_DIR" ]; then
+    OVERLAY_TMP=$(mktemp -dt snap.XXXXXXXXXX)
+    cp -rp "$OVERLAY_DIR"/* "$OVERLAY_TMP"
+    find "$OVERLAY_TMP" -type f -exec sh -c "file {} | grep text >/dev/null && sed -i 's/@PACKAGE@/$PACKAGE_NAME/g;s/@VERSION@/$VERSION/g;s/@ARCH@/$ARCH/g' {}" \;
+    cp -rp "$OVERLAY_TMP"/* "$ROOT"
+    rm -rf "$OVERLAY_TMP"
+fi
+
+if $VERBOSE; then
+    snappy build $ROOT
+else
+    snappy build $ROOT | grep Generated
+fi
+
+rm -rf "$ROOT"
+exit 0

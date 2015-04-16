@@ -1,0 +1,78 @@
+#!/usr/bin/python3
+# -*- Mode: Python; indent-tabs-mode: nil; tab-width: 4 -*-
+#
+# Copyright (C) 2015 Canonical, Ltd.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; version 3.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+import apt
+import argparse
+import sys
+
+parser = argparse.ArgumentParser()
+parser.add_argument('packages', metavar='package', nargs='+')
+parser.add_argument('--manifest', metavar='file', default='')
+parser.add_argument('--verbose', action="store_true")
+args = parser.parse_args()
+
+cache = apt.Cache()
+alldeps = set()
+manifestdeps = set()
+skipped = set()
+
+if args.manifest:
+    try:
+        with open(args.manifest) as f:
+            for line in f:
+                words = line.split()
+                if not words:
+                    continue
+                pkg = words[0].split(':')[0]
+                if pkg in cache:
+                    manifestdeps.add(pkg)
+    except:
+        print("Could not open manifest file %s" % args.manifest, file=sys.stderr)
+        sys.exit(1)
+
+def addDeps(pkgs):
+    for p in pkgs:
+        if p in alldeps:
+            continue
+        if p in manifestdeps and p not in args.packages:
+            skipped.add(p)
+            continue
+        try:
+            installedPkg = cache[p].installed
+            deps = installedPkg.dependencies + installedPkg.recommends
+            alldeps.add(p)
+            addDeps([x[0].name for x in deps])
+        except:
+            pass
+
+addDeps(args.packages)
+
+exit = False
+for p in args.packages:
+    if p not in alldeps:
+        exit = True
+        print("Package %s not installed" % p, file=sys.stderr)
+if exit:
+    sys.exit(1)
+
+if skipped and args.verbose:
+    print("Skipped the following manifest packages:", file=sys.stderr)
+    for d in sorted(skipped):
+        print(" " + d, file=sys.stderr)
+
+for d in sorted(alldeps):
+    print(d)

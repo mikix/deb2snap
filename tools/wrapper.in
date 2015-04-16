@@ -1,0 +1,28 @@
+#!/bin/sh
+# -*- Mode: sh; indent-tabs-mode: nil; tab-width: 4 -*-
+#
+# Copyright (C) 2015 Canonical, Ltd.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; version 3.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+export SNAPPY_PRELOAD=/apps/@PACKAGE@/@VERSION@/debs
+
+if [ -d "$SNAPPY_PRELOAD/var/lib" ] && [ -w "$SNAP_APP_DATA_PATH" ]; then
+    # Pre-seed app-version-specific /var/lib directory with data from snap
+    cp -rp $SNAPPY_PRELOAD/var/lib/* "$SNAP_APP_DATA_PATH"
+fi
+
+export LD_LIBRARY_PATH=@LDPATHS@
+export LD_PRELOAD=@LDPRELOAD@
+
+exec @COMMAND@ $@

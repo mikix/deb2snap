@@ -1,0 +1,36 @@
+#!/bin/bash
+# -*- Mode: sh; indent-tabs-mode: nil; tab-width: 4 -*-
+#
+# Copyright (C) 2015 Canonical, Ltd.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; version 3.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+set -e
+
+ROOT=$1
+PACKAGE=$2
+VERSION=$3
+
+if [ -d $ROOT/debs/etc/X11 ]; then
+    # X will only start for root user if we don't do this
+    echo "allowed_users=anybody" >> $ROOT/debs/etc/X11/Xwrapper.config
+fi
+
+if [ -d $ROOT/debs/var/lib/xkb ]; then
+    # Copy compiled xkb data for Xorg, because bug 972324 prevents Xorg from
+    # starting if it has to compile them itself when /tmp is on a separate
+    # filesystem.
+    cp -p /var/lib/xkb/*.xkm $ROOT/debs/var/lib/xkb/
+fi
+
+exit 0
