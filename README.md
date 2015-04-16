@@ -36,7 +36,9 @@ We'll fix this by **intercepting attempts to run 32-bit executables** and runnin
 
 And finally build deb2snap:
 
-    sudo apt-get install cmake gcc-multilib
+    sudo add-apt-repository ppa:snappy-dev/beta
+    sudo apt-get update
+    sudo apt-get install cmake gcc-multilib ubuntu-snappy-cli
     bzr branch lp:deb2snap
     cd deb2snap
     make
@@ -212,7 +214,7 @@ This pulls from the debs installed **on your system**!  So you have to have all 
 
   Include a copy of libc6:i386 and a 32-bit compatible version of libsnappypreload.so so that 32-bit executables will run.
 
-* --arch
+* --arch ARCH
 
   The architecture for the snap you want to create.  Defaults to your system architecture.  You only need to specify this if you are including only multiarch packages.
 
