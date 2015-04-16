@@ -179,7 +179,7 @@ This pulls from the debs installed **on your system**!  So you have to have all 
 
   Uses a mir wrapper script so that your executable will connect to a running Mir server.
 
-* --xmir
+* --xmir BINARY
 
   Uses an xmir wrapper script so that your executable will connect to a running Mir server through xmir and will package Xorg and xmir into your snap for you.  This will use an unconfined AppArmor template and require running the app as root.  Even then, there will be some bugs and oddities.
 
