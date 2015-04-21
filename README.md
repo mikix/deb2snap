@@ -30,7 +30,7 @@ We'll fix this by **intercepting attempts to run 32-bit executables** and runnin
 
 ### Setup
 
-- First, [install an up-to-date snappy system](https://developer.ubuntu.com/snappy/start).  You can easily get the latest snappy image with the following command: `sudo ubuntu-device-flash core -o snappy.img`
+- First, [install an up-to-date snappy system](https://developer.ubuntu.com/snappy/start).  You can easily get the latest snappy image with the following command: `sudo ubuntu-device-flash core --enable-ssh -o snappy.img`
 - And you'll probably want to connect to your snappy machine with `ssh`, especially if you're going to be running any Mir apps that will take over the screen.
 - Remember to run `export LC_ALL=C.UTF-8` in your `ssh` terminal.  Ubuntu Snappy doesn't have all locales yet and ssh may have ported over your local locale setting.
 
