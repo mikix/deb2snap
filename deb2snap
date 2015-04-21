@@ -120,14 +120,23 @@ if [ -z "$COMMANDS" ]; then
     exit 1
 fi
 
+CMD_PACKAGE=
 for COMMAND in $COMMANDS; do
-    CMD_PACKAGE=$(get_pkg_for_file $COMMAND)
-    if [ -n "$CMD_PACKAGE" ]; then
-        PACKAGES="$PACKAGES $CMD_PACKAGE"
+    ONE_CMD_PACKAGE=$(get_pkg_for_file $COMMAND)
+    if [ -n "$ONE_CMD_PACKAGE" ]; then
+        PACKAGES="$PACKAGES $ONE_CMD_PACKAGE"
+    else
+        # just for tracking that we can't assume package name/version
+        ONE_CMD_PACKAGE="UNKNOWN"
+    fi
+    if [ -z "$CMD_PACKAGE" ]; then
+        CMD_PACKAGE="$ONE_CMD_PACKAGE"
+    elif [ "$CMD_PACKAGE" != "$ONE_CMD_PACKAGE" ]; then
+        CMD_PACKAGE="$CMD_PACKAGE $ONE_CMD_PACKAGE"
     fi
 done
 
-COMMANDS_LEN=$(echo $COMMANDS | wc -w)
+COMMANDS_LEN=$(echo $CMD_PACKAGE | wc -w)
 if [ $COMMANDS_LEN -gt 1 ]; then
     CMD_PACKAGE=
 fi
