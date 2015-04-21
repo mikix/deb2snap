@@ -33,4 +33,16 @@ if [ -d $ROOT/debs/var/lib/xkb ]; then
     cp -p /var/lib/xkb/*.xkm $ROOT/debs/var/lib/xkb/
 fi
 
+if [ -e $ROOT/debs/usr/share/ca-certificates/mozilla/AC_Raíz_Certicámara_S.A..crt ]; then
+    # Work around bug 1446820 and its overzealous check for '..'
+    mv $ROOT/debs/usr/share/ca-certificates/mozilla/AC_Raíz_Certicámara_S.A..crt \
+       $ROOT/debs/usr/share/ca-certificates/mozilla/AC_Raíz_Certicámara_S.A.crt
+fi
+
+if [ -e $ROOT/debs/usr/lib/ssl/certs/AC_Raíz_Certicámara_S.A..pem ]; then
+    # Work around bug 1446820 and its overzealous check for '..'
+    mv $ROOT/debs/usr/lib/ssl/certs/AC_Raíz_Certicámara_S.A..pem \
+       $ROOT/debs/usr/lib/ssl/certs/AC_Raíz_Certicámara_S.A.pem
+fi
+
 exit 0
