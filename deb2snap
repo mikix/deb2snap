@@ -187,16 +187,16 @@ fi
 # Unfortunately, we lose the ordering when we sort.  We also grab directories
 # we end up not caring about (from other packages installed on the system).
 # Is there a cleaner way to do this?
-LDPATHS=$(ldconfig --print-cache | grep ' => /' | sed 's|^.* => \(/[^ ]*\)/[^/ ]*.*$|\1|g' | sort -r | uniq | tr '\n' : | sed "s=^=/apps/$PACKAGE_NAME/$VERSION/debs=;s=:/=:/apps/$PACKAGE_NAME/$VERSION/debs/=g")
+LDPATHS=$(ldconfig --print-cache | grep ' => /' | sed 's|^.* => \(/[^ ]*\)/[^/ ]*.*$|\1|g' | sort -r | uniq | tr '\n' : | sed "s=^=\$SNAP_APP_PATH/debs=;s=:/=:\$SNAP_APP_PATH/debs/=g")
 
 mkdir -p $ROOT/lib64
 cp -p ./builddir/src/libsnappypreload64.so $ROOT/lib64/libsnappypreload.so
-LDPRELOAD=/apps/$PACKAGE_NAME/$VERSION/lib64/libsnappypreload.so
+LDPRELOAD=\$SNAP_APP_PATH/lib64/libsnappypreload.so
 
 if $SHIP32; then
     mkdir -p $ROOT/lib32
     cp -p ./builddir/src/libsnappypreload32.so $ROOT/lib32/libsnappypreload.so
-    LDPRELOAD=$LDPRELOAD:/apps/$PACKAGE_NAME/$VERSION/lib32/libsnappypreload.so
+    LDPRELOAD=$LDPRELOAD:\$SNAP_APP_PATH/lib32/libsnappypreload.so
 fi
 
 for COMMAND in $COMMANDS; do
@@ -209,7 +209,7 @@ for COMMAND in $COMMANDS; do
     fi
 
     CAPS=
-    WRAPPER_COMMAND="/apps/$PACKAGE_NAME/$VERSION/bin/$SHORT_COMMAND.real"
+    WRAPPER_COMMAND="\$SNAP_APP_PATH/bin/$SHORT_COMMAND.real"
 
     if $MIR; then
         WRAPPER_COMMAND="/apps/mir/current/bin/mir-run $WRAPPER_COMMAND"
@@ -221,7 +221,7 @@ for COMMAND in $COMMANDS; do
     fi
 
     if $XMIR; then
-        WRAPPER_COMMAND="/apps/$PACKAGE_NAME/$VERSION/bin/_xmir-run $WRAPPER_COMMAND"
+        WRAPPER_COMMAND="\$SNAP_APP_PATH/bin/_xmir-run $WRAPPER_COMMAND"
 # A snappy bug prevents us from depending on a framework yet
 #       FRAMEWORKS="${FRAMEWORKS}
 # - mir"
@@ -229,7 +229,7 @@ for COMMAND in $COMMANDS; do
     - mir_client"
     fi
 
-    sed "s|@PACKAGE@|$PACKAGE_NAME|g;s|@VERSION@|$VERSION|g;s|@COMMAND@|$WRAPPER_COMMAND|g;s|@LDPATHS@|$LDPATHS|g;s|@LDPRELOAD@|$LDPRELOAD|g" ./tools/wrapper.in > $ROOT/bin/$SHORT_COMMAND
+    sed "s|@COMMAND@|$WRAPPER_COMMAND|g;s|@LDPATHS@|$LDPATHS|g;s|@LDPRELOAD@|$LDPRELOAD|g" ./tools/wrapper.in > $ROOT/bin/$SHORT_COMMAND
     chmod a+x $ROOT/bin/$SHORT_COMMAND
 
     YAML_BINARIES="$YAML_BINARIES

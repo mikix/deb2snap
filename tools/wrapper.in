@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-export SNAPPY_PRELOAD=/apps/@PACKAGE@/@VERSION@/debs
+export SNAPPY_PRELOAD="$SNAP_APP_PATH/debs"
 
 if [ -d "$SNAPPY_PRELOAD/var/lib" ] && [ -w "$SNAP_APP_DATA_PATH" ]; then
     # Pre-seed app-version-specific /var/lib directory with data from snap
