@@ -137,7 +137,7 @@ for COMMAND in $COMMANDS; do
 done
 
 COMMANDS_LEN=$(echo $CMD_PACKAGE | wc -w)
-if [ $COMMANDS_LEN -gt 1 ]; then
+if [ $COMMANDS_LEN -gt 1 -o "$CMD_PACKAGE" = "UNKNOWN" ]; then
     CMD_PACKAGE=
 fi
 
