@@ -28,14 +28,12 @@ LIST=$(dpkg -L $* | grep '^/')
 
 set +e
 for file in $LIST; do
-    if [ -d "$file" ]; then
+    mkdir -p "$DIR$(dirname $file)"
+    if [ -h "$file" ]; then
+        cp -prL "$file" "$DIR$file"
+    elif [ -d "$file" ]; then
         mkdir -p "$DIR$file"
-    elif [ -h "$file" ] && readlink "$file" | grep '^[^/.]' >/dev/null; then
-        # only allow symlinks that are relative but not with '..'
-        mkdir -p "$DIR$(dirname $file)"
-        cp -pd "$file" "$DIR$file"
     else
-        mkdir -p "$DIR$(dirname $file)"
         cp -p "$file" "$DIR$file"
     fi
 done
