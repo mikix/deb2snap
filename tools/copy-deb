@@ -32,6 +32,6 @@ for file in $LIST; do
         mkdir -p "$DIR$file"
     else
         mkdir -p "$DIR$(dirname $file)"
-        cp -p "$file" "$DIR$file"
+        cp -pd "$file" "$DIR$file"
     fi
 done
