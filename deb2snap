@@ -160,7 +160,7 @@ if [ -z "$VERSION" ]; then
     fi
     VERSION=$(apt-cache policy $CMD_PACKAGE | grep '\*\*\*' | cut -d' ' -f3)
 fi
-VERSION=$(echo $VERSION | tr ':' '-') # ':' in paths will confuse LD_PRELOAD
+VERSION=$(echo $VERSION | tr '~+:' '-') # ':' in paths will confuse LD_PRELOAD
 
 ROOT=$(mktemp -dt snap.XXXXXXXXXX)
 mkdir -p $ROOT/bin $ROOT/meta
