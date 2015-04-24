@@ -213,18 +213,16 @@ for COMMAND in $COMMANDS; do
 
     if $MIR; then
         WRAPPER_COMMAND="/apps/mir/current/bin/mir-run $WRAPPER_COMMAND"
-# A snappy bug prevents us from depending on a framework yet
-#       FRAMEWORKS="${FRAMEWORKS}
-# - mir"
+       FRAMEWORKS="${FRAMEWORKS}
+ - mir"
         CAPS="${CAPS}
     - mir_client"
     fi
 
     if $XMIR; then
         WRAPPER_COMMAND="\$SNAP_APP_PATH/bin/_xmir-run $WRAPPER_COMMAND"
-# A snappy bug prevents us from depending on a framework yet
-#       FRAMEWORKS="${FRAMEWORKS}
-# - mir"
+       FRAMEWORKS="${FRAMEWORKS}
+ - mir"
         CAPS="${CAPS}
     - mir_client"
     fi
