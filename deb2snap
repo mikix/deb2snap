@@ -19,6 +19,7 @@ set -e
 
 ARCH=
 DESCRIPTION="A custom command"
+LOCAL_EXEC=false
 MIR=false
 SHIP32=false
 VERBOSE=false
@@ -49,6 +50,9 @@ case $key in
     -d|--distro)
     DISTRO="$2"
     shift
+    ;;
+    --local-exec)
+    LOCAL_EXEC=true
     ;;
     --mir)
     MIR=true
@@ -135,6 +139,9 @@ for COMMAND in $COMMANDS; do
         CMD_PACKAGE="$CMD_PACKAGE $ONE_CMD_PACKAGE"
     fi
 done
+if $LOCAL_EXEC; then
+    CMD_PACKAGE= # act like we didn't find anything
+fi
 
 COMMANDS_LEN=$(echo $CMD_PACKAGE | wc -w)
 if [ $COMMANDS_LEN -gt 1 -o "$CMD_PACKAGE" = "UNKNOWN" ]; then
@@ -212,7 +219,7 @@ for COMMAND in $COMMANDS; do
     WRAPPER_COMMAND="\$SNAP_APP_PATH/bin/$SHORT_COMMAND.real"
 
     if $MIR; then
-        WRAPPER_COMMAND="/apps/mir/current/bin/mir-run $WRAPPER_COMMAND"
+        WRAPPER_COMMAND="env QT_QPA_PLATFORM=ubuntumirclient /apps/mir/current/bin/mir-run $WRAPPER_COMMAND"
        FRAMEWORKS="${FRAMEWORKS}
  - mir"
         CAPS="${CAPS}
@@ -281,7 +288,14 @@ if [ -n "$PACKAGES" ]; then
         fi
         MANIFEST_ARG="--manifest $DOWNLOAD_DIR/$MANIFEST_FILE"
     fi
-    ./tools/dep-tree $MANIFEST_ARG $PACKAGES | xargs ./tools/copy-deb $ROOT/debs
+    ALL_PACKAGES="$(./tools/dep-tree $MANIFEST_ARG $PACKAGES)"
+
+    if $MIR && echo $ALL_PACKAGES | grep -q libqt5gui; then
+        PACKAGES="$PACKAGES qtubuntu-desktop"
+        ALL_PACKAGES="$(./tools/dep-tree $MANIFEST_ARG $PACKAGES)"
+    fi
+
+    echo $ALL_PACKAGES | xargs ./tools/copy-deb $ROOT/debs
 fi
 
 ./tools/fixes "$ROOT" $PACKAGE_NAME $VERSION
