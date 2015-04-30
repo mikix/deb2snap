@@ -27,6 +27,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/socket.h>
+#include <sys/statvfs.h>
 #include <sys/un.h>
 #include <sys/vfs.h>
 #include <unistd.h>
@@ -419,6 +420,10 @@ REDIRECT_2_3(int, __lxstat64, int, struct stat64 *)
 REDIRECT_3_5(int, __fxstatat, int, int, struct stat *, int)
 REDIRECT_3_5(int, __fxstatat64, int, int, struct stat64 *, int)
 REDIRECT_1_2(int, statfs, struct statfs *)
+REDIRECT_1_2(int, statfs64, struct statfs64 *)
+REDIRECT_1_2(int, statvfs, struct statvfs *)
+REDIRECT_1_2(int, statvfs64, struct statvfs64 *)
+REDIRECT_1_2(long, pathconf, int)
 REDIRECT_1_1(DIR *, opendir)
 REDIRECT_1_2(int, mkdir, mode_t)
 REDIRECT_1_1(int, rmdir)
