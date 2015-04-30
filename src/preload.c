@@ -28,6 +28,7 @@
 #include <string.h>
 #include <sys/socket.h>
 #include <sys/un.h>
+#include <sys/vfs.h>
 #include <unistd.h>
 
 #define LD_PRELOAD "LD_PRELOAD"
