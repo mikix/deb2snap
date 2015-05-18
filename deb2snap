@@ -157,7 +157,7 @@ if [ -z "$PACKAGE_NAME" ]; then
         echo "No package name specified"
         exit 1
     fi
-    PACKAGE_NAME=$CMD_PACKAGE
+    PACKAGE_NAME=$(echo $CMD_PACKAGE | tr '~+:' '-') # ':' is not allowed
 fi
 
 if [ -z "$VERSION" ]; then
