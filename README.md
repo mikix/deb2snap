@@ -65,13 +65,11 @@ Thanks, `fortune`.
 
 Let's be proud and base and **make the snap smaller**.  We don't *need* to include *every* dependency of `fortune`.  Some come included with Ubuntu Core for free.  Let's exclude anything that comes with Ubuntu Core 15.04 Beta 2:
 
-    ./deb2snap -d 15.04/beta-2 fortune
-
-If you leave off the `/beta-2`, `/release` will be assumed.
+    ./deb2snap -d 15.04 fortune
 
 But what if we want **more fortunes**?  We can include more packages in the snap with the `-p` flag.
 
-    ./deb2snap -d 15.04/beta-2 -p fortunes-spam -p fortunes-ubuntu-server fortune
+    ./deb2snap -d 15.04 -p fortunes-spam -p fortunes-ubuntu-server fortune
 
 ### Non-archive app
 
@@ -79,7 +77,7 @@ Let's say you've got some random executable or script on your machine.  You'd li
 
 That's fine!  Instead of giving the name of a program on your machine, just point `deb2snap` at the executable:
 
-    ./deb2snap -d 15.04/beta-2 ~/Desktop/my-custom-app
+    ./deb2snap -d 15.04 ~/Desktop/my-custom-app
 
 `deb2snap` will automatically scan the executable and include the libraries you'll need.  But if you have any other programs or data that your app will need from the archive, you can always include them with `-p`.
 
@@ -112,7 +110,7 @@ Presumably one day a similar Mir framework will be available in the store.  But 
 
 Once you have the Mir framework installed, let's build a simple Mir app:
 
-    ./deb2snap -d 15.04/beta-2 --mir mir_demo_client_fingerpaint
+    ./deb2snap -d 15.04 --mir mir_demo_client_fingerpaint
 
 Note the use of `--mir`.  This tells `deb2snap` that your app needs to be wrapped with a call to `/apps/mir/current/bin/mir-run` and needs to ask snappy for permission to connect to Mir.
 
@@ -130,13 +128,13 @@ There are two versions of Xmir: the one in the archive right now which works as 
 
 The former (**Xmir Legacy**) is easier to bundle into a snap because it's in the archive already.  But it has some notable bugs: you'll have graphical glitches around your cursor, you'll see a second cursor on the screen, and you'll need to run your app as root.  Build it into your snap like so:
 
-    ./deb2snap -d 15.04/beta-2 --xmir xfreerdp
+    ./deb2snap -d 15.04 --xmir xfreerdp
     # copy and install snap into snappy machine
     sudo /apps/bin/xfreerdp.freerdp-x11 /f /v:SERVER /u:USER /p:PASSWORD
 
 The latter (**Xmir Next**) is difficult to bundle in because you'll need to build it yourself (see below).  But it fixes the above bugs.
 
-    ./deb2snap -d 15.04/beta-2 --xmir-binary ~/Xmir xfreerdp
+    ./deb2snap -d 15.04 --xmir-binary ~/Xmir xfreerdp
     # copy and install snap into snappy machine
     xfreerdp.freerdp-x11 /f /v:SERVER /u:USER /p:PASSWORD
 
@@ -166,9 +164,9 @@ This pulls from the debs installed **on your system**!  So you have to have all 
 
 ## Common options
 
-* -d 15.04/beta-2
+* -d 15.04
 
-  The version of Ubuntu Core you want to target.  It will skip including any package already provided by that version of Ubuntu Core.  If you leave off the '/beta-2' bit, '/release' will be assumed.
+  The version of Ubuntu Core you want to target.  It will skip including any package already provided by that version of Ubuntu Core.  You can add a suffix like '/beta-2', if there isn't an official release yet.
 
 * -p PACKAGE
 
