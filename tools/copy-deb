@@ -22,14 +22,11 @@ if [[ $DIR != /* ]]; then
 fi
 shift
 
-set -e
 set -o pipefail
-LIST=$(dpkg -L $* | grep '^/')
-
 set +e
-for file in $LIST; do
-    mkdir -p "$DIR$(dirname $file)"
-    if [ -h "$file" ] && [ "$(readlink $file)" != "." ]; then
+dpkg -L $* | grep '^/' | while read file; do
+    mkdir -p "$DIR$(dirname \"$file\")"
+    if [ -h "$file" ] && [ "$(readlink \"$file\")" != "." ]; then
         # Disallow a self-redirection like /usr/bin/X11 because then the snap
         # size explodes as we do recursive copies.  Let's just accept that
         # /usr/bin/X11 won't work.
