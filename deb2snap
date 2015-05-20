@@ -20,6 +20,7 @@ set -e
 ARCH=
 DESCRIPTION="A custom command"
 LOCAL_EXEC=false
+DBUS=false
 MIR=false
 SHIP32=false
 VERBOSE=false
@@ -42,6 +43,9 @@ case $key in
     --arch)
     ARCH="$2"
     shift
+    ;;
+    --dbus)
+    DBUS=true
     ;;
     --desc)
     DESCRIPTION="$2"
@@ -172,6 +176,11 @@ VERSION=$(echo $VERSION | tr '~+:' '-') # ':' in paths will confuse LD_PRELOAD
 ROOT=$(mktemp -dt snap.XXXXXXXXXX)
 mkdir -p $ROOT/bin $ROOT/meta
 
+if $DBUS; then
+    PACKAGES="dbus $PACKAGES"
+    cp -p ./tools/dbus-daemon $ROOT/bin/_dbus-daemon
+fi
+
 if $XMIR; then
     if [ -n "$XMIREXEC" ]; then
         # Xmir 2.0!  Whole different way of calling it.
@@ -217,6 +226,10 @@ for COMMAND in $COMMANDS; do
 
     CAPS=
     WRAPPER_COMMAND="\$SNAP_APP_PATH/bin/$SHORT_COMMAND.real"
+
+    if $DBUS; then
+        WRAPPER_COMMAND="dbus-run-session --dbus-daemon=\$SNAP_APP_PATH/bin/_dbus-daemon -- $WRAPPER_COMMAND"
+    fi
 
     if $MIR; then
         WRAPPER_COMMAND="env QT_QPA_PLATFORM=ubuntumirclient /apps/mir/current/bin/mir-run $WRAPPER_COMMAND"

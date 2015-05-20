@@ -26,6 +26,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/inotify.h>
 #include <sys/socket.h>
 #include <sys/statvfs.h>
 #include <sys/un.h>
@@ -440,6 +441,7 @@ REDIRECT_OPEN(open)
 REDIRECT_OPEN(open64)
 REDIRECT_OPEN_AT(openat)
 REDIRECT_OPEN_AT(openat64)
+REDIRECT_2_3(int, inotify_add_watch, int, uint32_t)
 
 int
 scandir (const char *dirp, struct dirent ***namelist, int (*filter)(const struct dirent *), int (*compar)(const struct dirent **, const struct dirent **))
@@ -481,7 +483,7 @@ bind (int sockfd, const struct sockaddr *addr, socklen_t addrlen)
 
     _bind = (int (*)(int sockfd, const struct sockaddr *addr, socklen_t addrlen)) dlsym (RTLD_NEXT, "bind");
 
-    if (addr->sa_family == AF_UNIX) {
+    if (addr->sa_family == AF_UNIX && ((const struct sockaddr_un *)addr)->sun_path[0] != 0) { // could be abstract socket
         char *new_path = NULL;
         struct sockaddr_un new_addr;
 

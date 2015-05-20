@@ -1,0 +1,2 @@
+#!/bin/sh
+exec dbus-daemon --address=unix:path=$(mktemp -u --tmpdir=$SNAP_APP_TMPDIR) $@

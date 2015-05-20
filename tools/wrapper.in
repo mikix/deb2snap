@@ -24,5 +24,9 @@ fi
 
 export LD_LIBRARY_PATH=@LDPATHS@
 export LD_PRELOAD=@LDPRELOAD@
+export PATH=$(echo $PATH | sed "s=^/=$SNAP_APP_PATH/debs/=;s=:/=:$SNAP_APP_PATH/debs/=g"):$PATH
+
+# Bug 1457183
+export TMPDIR="$SNAP_APP_TMPDIR"
 
 exec @COMMAND@ $@
