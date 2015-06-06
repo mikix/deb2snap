@@ -81,7 +81,7 @@ That's fine!  Instead of giving the name of a program on your machine, just poin
 
 `deb2snap` will automatically scan the executable and include the libraries you'll need.  But if you have any other programs or data that your app will need from the archive, you can always include them with `-p`.
 
-Pointing at a script is especially useful if you need to do some minor setup before calling the real program.  Just remember to include the real program with `-p` in that case, since `snap2deb` won't be able to detect that automatically like usual.
+Pointing at a script is especially useful if you need to do some minor setup before calling the real program.  Just remember to include the real program with `-p` in that case, since `deb2snap` won't be able to detect that automatically like usual.
 
 ### Mir app
 
