@@ -188,7 +188,13 @@ if $XMIR; then
         PACKAGES="xorg $(get_pkgs_from_ldd $XMIREXEC) $PACKAGES"
         cp -p ./tools/xmir2-run $ROOT/bin/_xmir-run
         cp -p "$XMIREXEC" $ROOT/bin/_Xmir
+    elif which Xmir >/dev/null; then
+        # Xmir 2.0 again, and again include xorg for all its data packages
+        PACKAGES="xorg xmir $PACKAGES"
+        cp -p ./tools/xmir2-run $ROOT/bin/_xmir-run
+        cp -p "$(which Xmir)" $ROOT/bin/_Xmir
     else
+        # Old Xmir 1.0, needs an unconfined AA template
         PACKAGES="xorg xserver-xorg-xmir $PACKAGES"
         cp -p ./tools/xmir-run $ROOT/bin/_xmir-run
         if [ -n "AA_TEMPLATE" ]; then

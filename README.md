@@ -124,21 +124,25 @@ Many apps in the Ubuntu archive still use the X protocol directly (rather than a
 
 Let's build a neat snappy demo: xfreerdp.  This will let us transform any snappy install into a thin client!
 
-There are two versions of Xmir: the one in the archive right now which works as an extension to Xorg, and one under development that works as a separate X server called `Xmir`.  `deb2snap` has support for both, and both need a working Mir framework, as above.
+There are two versions of Xmir: the one offered in Ubuntu 15.04 and earlier, which works as an extension to Xorg, and the one offered in 15.10 and later, which works as a standalone X server called `Xmir`.  `deb2snap` has support for both, and both need a working Mir framework, as above.
 
-The former (**Xmir Legacy**) is easier to bundle into a snap because it's in the archive already.  But it has some notable bugs: you'll have graphical glitches around your cursor, you'll see a second cursor on the screen, and you'll need to run your app as root.  Build it into your snap like so:
+When you pass `--xmir` to `deb2snap`, you will get whichever version of Xmir is available on your system.
+
+The older version has some notable bugs: you'll have graphical glitches around your cursor, you'll see a second cursor on the screen, and you'll need to run your app as root.  Build it into your snap like so:
 
     ./deb2snap -d 15.04 --xmir xfreerdp
     # copy and install snap into snappy machine
     sudo /apps/bin/xfreerdp.freerdp-x11 /f /v:SERVER /u:USER /p:PASSWORD
 
-The latter (**Xmir Next**) is difficult to bundle in because you'll need to build it yourself (see below).  But it fixes the above bugs.
+The newer version doesn't have those bugs.  You can simply build it into your snap like so:
 
-    ./deb2snap -d 15.04 --xmir-binary ~/Xmir xfreerdp
+    ./deb2snap -d 15.04 --xmir xfreerdp
     # copy and install snap into snappy machine
     xfreerdp.freerdp-x11 /f /v:SERVER /u:USER /p:PASSWORD
 
 #### Building Xmir Next
+
+If you are on an older system but still want the new Xmir, you can build it yourself.  Try these steps:
 
     git clone git://people.freedesktop.org/~mlankhorst/xserver
     cd xserver
@@ -146,7 +150,9 @@ The latter (**Xmir Next**) is difficult to bundle in because you'll need to buil
     debian/rules build
     cp ./build-main/hw/xmir/Xmir ~/
 
-Hopefully it will be in the archive soon.
+Then run `deb2snap` with the `--xmir-binary` argument:
+
+    ./deb2snap -d 15.04 --xmir-binary ~/Xmir xfreerdp
 
 ## How it works
 
