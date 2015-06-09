@@ -140,7 +140,7 @@ The newer version doesn't have those bugs.  You can simply build it into your sn
     # copy and install snap into snappy machine
     xfreerdp.freerdp-x11 /f /v:SERVER /u:USER /p:PASSWORD
 
-#### Building Xmir Next
+#### Building Xmir Yourself
 
 If you are on an older system but still want the new Xmir, you can build it yourself.  Try these steps:
 
