@@ -36,7 +36,7 @@ We'll fix this by **intercepting attempts to run 32-bit executables** and runnin
 
 And finally build deb2snap:
 
-    sudo add-apt-repository ppa:snappy-dev/beta
+    sudo add-apt-repository ppa:snappy-dev/beta # if on 15.04 or earlier
     sudo apt-get update
     sudo apt-get install cmake gcc-multilib ubuntu-snappy-cli
     bzr branch lp:deb2snap
