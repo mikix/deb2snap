@@ -109,7 +109,7 @@ done
 
 function get_pkg_for_file()
 {
-    dpkg -S $@ 2>/dev/null | sed 's/: .*//'
+    dpkg -S $@ 2>/dev/null | awk -F: '{print $1}'
 }
 
 function get_pkgs_from_ldd()
