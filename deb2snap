@@ -173,6 +173,10 @@ if [ -z "$VERSION" ]; then
 fi
 VERSION=$(echo $VERSION | tr '~+:' '-') # ':' in paths will confuse LD_PRELOAD
 
+if [ -z "$VENDOR" ]; then
+    VENDOR="vendor: \"Unknown\""
+fi
+
 ROOT=$(mktemp -dt snap.XXXXXXXXXX)
 mkdir -p $ROOT/bin $ROOT/meta
 
