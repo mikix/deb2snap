@@ -215,9 +215,9 @@ fi
 # Is there a cleaner way to do this?
 LDPATHS=$(ldconfig --print-cache | grep ' => /' | sed 's|^.* => \(/[^ ]*\)/[^/ ]*.*$|\1|g' | sort -r | uniq | tr '\n' : | sed "s=^=\$SNAP_APP_PATH/debs=;s=:/=:\$SNAP_APP_PATH/debs/=g")
 
-mkdir -p $ROOT/lib64
-cp -p ./builddir/src/libsnappypreload64.so $ROOT/lib64/libsnappypreload.so
-LDPRELOAD=\$SNAP_APP_PATH/lib64/libsnappypreload.so
+mkdir -p $ROOT/lib
+cp -p ./builddir/src/libsnappypreload.so $ROOT/lib/libsnappypreload.so
+LDPRELOAD=\$SNAP_APP_PATH/lib/libsnappypreload.so
 
 if $SHIP32; then
     mkdir -p $ROOT/lib32
