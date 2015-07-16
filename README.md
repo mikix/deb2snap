@@ -36,7 +36,7 @@ We'll fix this by **intercepting attempts to run 32-bit executables** and runnin
 
 And finally build deb2snap:
 
-    sudo add-apt-repository ppa:snappy-dev/beta # if on 15.04 or earlier
+    sudo add-apt-repository ppa:snappy-dev/tools # if on 15.04 or earlier
     sudo apt-get update
     sudo apt-get install cmake gcc-multilib ubuntu-snappy-cli
     bzr branch lp:deb2snap
@@ -63,7 +63,7 @@ Let's install that snap file and run `fortune`:
 
 Thanks, `fortune`.
 
-Let's be proud and base and **make the snap smaller**.  We don't *need* to include *every* dependency of `fortune`.  Some come included with Ubuntu Core for free.  Let's exclude anything that comes with Ubuntu Core 15.04 Beta 2:
+Let's be proud and base and **make the snap smaller**.  We don't *need* to include *every* dependency of `fortune`.  Some come included with Ubuntu Core for free.  Let's exclude anything that comes with Ubuntu Core 15.04:
 
     ./deb2snap -d 15.04 fortune
 
