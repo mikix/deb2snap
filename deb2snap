@@ -325,7 +325,7 @@ fi
 
 if [ -n "$OVERLAY_DIR" ]; then
     OVERLAY_TMP=$(mktemp -dt snap.XXXXXXXXXX)
-    cp -rp "$OVERLAY_DIR"/* "$OVERLAY_TMP"
+    cp -dR --preserve=mode "$OVERLAY_DIR"/* "$OVERLAY_TMP"
     find "$OVERLAY_TMP" -type f -exec sh -c "file {} | grep text >/dev/null && sed -i 's/@PACKAGE@/$PACKAGE_NAME/g;s/@VERSION@/$VERSION/g;s/@ARCH@/$ARCH/g' {}" \;
     cp -rp "$OVERLAY_TMP"/* "$ROOT"
     rm -rf "$OVERLAY_TMP"
