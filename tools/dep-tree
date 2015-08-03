@@ -16,6 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import apt
+import apt_pkg
 import argparse
 import sys
 
@@ -52,11 +53,12 @@ def addDeps(pkgs):
             skipped.add(p)
             continue
         try:
-            installedPkg = cache[p].installed
+            cacheName = p.split(':')[0] if ':' in p and apt_pkg.get_architectures()[0] == p.split(':')[1] else p
+            installedPkg = cache[cacheName].installed
             deps = installedPkg.dependencies + installedPkg.recommends
             alldeps.add(p)
             addDeps([x[0].name for x in deps])
-        except:
+        except Exception:
             pass
 
 addDeps(args.packages)
