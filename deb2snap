@@ -92,6 +92,10 @@ case $key in
     --xmir)
     XMIR=true
     ;;
+    --dkms)
+    DKMS="$2"
+    shift
+    ;;
     *)
     if [ -e $1 ]; then
         COMMAND=$(readlink -e $1)
@@ -208,6 +212,31 @@ if $XMIR; then
     fi
 fi
 
+if [ -n "$DKMS" ]; then
+    dkms_conf="`dpkg -L $DKMS | grep dkms.conf`"
+    if [ $? == 1 ]; then
+        echo "DKMS $DKMS cannot be found, please check the spelling."
+        exit 1
+    fi
+    dkms_package_name=`grep PACKAGE_NAME $dkms_conf | awk -F'"' '{ print $2 }'`
+    dkms_package_ver=`grep PACKAGE_VERSION $dkms_conf | awk -F'"' '{ print $2 }'`
+    dkms_module_names=`grep BUILT_MODULE_NAME $dkms_conf | awk -F'"' '{ print $2 }'`
+
+    # check if dkms has been installed
+    dkms status $dkms_package_name -v $dkms_package_ver -k `uname -r` | grep installed > /dev/null
+    if [ $? = 1 ]; then
+        echo "DKMS $DKMS has not been installed, plasea use 'dkms install' to install it first."
+        exit 1
+    fi
+
+    dkms_modules=""
+    for m in $dkms_module_names; do
+        kv=`uname -r`
+        ko=`find /lib/modules/$kv/updates/dkms/ -name $m.ko`
+        dkms_modules="$ko $modules"
+    done
+fi
+
 # This grabs all the current system's ld.so.conf entries as reported by
 # ldconfig and prepends our new root prefix to each of them.
 # Unfortunately, we lose the ordering when we sort.  We also grab directories
@@ -311,7 +340,11 @@ if [ -n "$PACKAGES" ]; then
         fi
         MANIFEST_ARG="--manifest $DOWNLOAD_DIR/$MANIFEST_FILE"
     fi
-    ALL_PACKAGES="$(./tools/dep-tree $MANIFEST_ARG $PACKAGES)"
+    if [ -z "$DKMS" ]; then
+        ALL_PACKAGES="$(./tools/dep-tree $MANIFEST_ARG $PACKAGES)"
+    else
+        ALL_PACKAGES="$(./tools/dep-tree --ignore $DKMS $MANIFEST_ARG $PACKAGES)"
+    fi
 
     if $MIR && echo $ALL_PACKAGES | grep -q libqt5gui; then
         PACKAGES="$PACKAGES qtubuntu-desktop"
@@ -319,6 +352,14 @@ if [ -n "$PACKAGES" ]; then
     fi
 
     echo $ALL_PACKAGES | xargs ./tools/copy-deb $ROOT/debs
+
+    if [ -n "$DKMS" ]; then
+        for ko in $dkms_modules; do
+            dest=$ROOT/`dirname $ko`
+            mkdir -p $dest
+            cp -p $ko $dest
+        done
+    fi
 fi
 
 ./tools/fixes "$ROOT" $PACKAGE_NAME $VERSION

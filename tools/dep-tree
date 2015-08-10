@@ -24,6 +24,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('packages', metavar='package', nargs='+')
 parser.add_argument('--manifest', metavar='file', default='')
 parser.add_argument('--verbose', action="store_true")
+parser.add_argument('--ignore', nargs='+')
 args = parser.parse_args()
 
 cache = apt.Cache()
@@ -51,6 +52,8 @@ def addDeps(pkgs):
             continue
         if p in manifestdeps and p not in args.packages:
             skipped.add(p)
+            continue
+        if args.ignore and p in args.ignore:
             continue
         try:
             cacheName = p.split(':')[0] if ':' in p and apt_pkg.get_architectures()[0] == p.split(':')[1] else p
