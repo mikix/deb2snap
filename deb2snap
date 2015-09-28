@@ -232,6 +232,14 @@ for COMMAND in $COMMANDS; do
 
     if [ "$(file -b --mime-encoding $COMMAND)" = "binary" ]; then
         PACKAGES="$PACKAGES $(get_pkgs_from_ldd $COMMAND)"
+        RPATHS=$(objdump -p $COMMAND | grep RPATH | awk '{ print $2 }')
+        if [ -n $RPATHS ]; then
+            ORIGINAL_PATH=$(dirname $COMMAND)
+            for RPATH in $(echo $RPATHS | tr : ' '); do
+                RPATH=$(echo $RPATH | sed "s|\$ORIGIN|$ORIGINAL_PATH|")
+                LDPATHS=$LDPATHS:\$SNAP_APP_PATH/debs$RPATH
+            done
+        fi
     fi
 
     CAPS=
