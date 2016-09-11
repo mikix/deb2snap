@@ -400,6 +400,7 @@ NAME (int dirfp, const char *path, int flags, ...) \
 }
 
 REDIRECT_1_2(FILE *, fopen, const char *)
+REDIRECT_1_2(FILE *, fopen64, const char *)
 REDIRECT_1_1(int, unlink)
 REDIRECT_2_3_AT(int, unlinkat, int, int)
 REDIRECT_1_2(int, access, int)
@@ -460,6 +461,30 @@ scandir (const char *dirp, struct dirent ***namelist, int (*filter)(const struct
 }
 
 int
+scandir64 (const char *dirp, struct dirent64 ***namelist,
+           int (*filter)(const struct dirent64 *),
+           int (*compar)(const struct dirent64 **, const struct dirent64 **))
+{
+    int (*_scandir64) (const char *dirp, struct dirent64 ***namelist,
+                       int (*filter)(const struct dirent64 *),
+                       int (*compar)(const struct dirent64 **, const struct dirent64 **));
+    char *new_path = NULL;
+    int ret;
+
+    _scandir64 = (int (*)(const char *dirp, struct dirent64 ***namelist,
+                          int (*filter)(const struct dirent64 *),
+                          int (*compar)(const struct dirent64 **, const struct dirent64 **)))
+        dlsym (RTLD_NEXT, "scandir64");
+
+    new_path = redirect_path (dirp);
+    ret = _scandir64 (new_path, namelist, filter, compar);
+    free (new_path);
+
+    return ret;
+}
+
+
+int
 scandirat (int dirfd, const char *dirp, struct dirent ***namelist, int (*filter)(const struct dirent *), int (*compar)(const struct dirent **, const struct dirent **))
 {
     int (*_scandirat) (int dirfd, const char *dirp, struct dirent ***namelist, int (*filter)(const struct dirent *), int (*compar)(const struct dirent **, const struct dirent **));
@@ -470,6 +495,29 @@ scandirat (int dirfd, const char *dirp, struct dirent ***namelist, int (*filter)
 
     new_path = redirect_path_if_absolute (dirp);
     ret = _scandirat (dirfd, new_path, namelist, filter, compar);
+    free (new_path);
+
+    return ret;
+}
+
+int
+scandirat64 (int dirfd, const char *dirp, struct dirent64 ***namelist,
+             int (*filter)(const struct dirent64 *),
+             int (*compar)(const struct dirent64 **, const struct dirent64 **))
+{
+    int (*_scandirat64) (int dirfd, const char *dirp, struct dirent64 ***namelist,
+                         int (*filter)(const struct dirent64 *),
+                         int (*compar)(const struct dirent64 **, const struct dirent64 **));
+    char *new_path = NULL;
+    int ret;
+
+    _scandirat64 = (int (*)(int dirfd, const char *dirp, struct dirent64 ***namelist,
+                            int (*filter)(const struct dirent64 *),
+                            int (*compar)(const struct dirent64 **, const struct dirent64 **)))
+        dlsym (RTLD_NEXT, "scandirat64");
+
+    new_path = redirect_path_if_absolute (dirp);
+    ret = _scandirat64 (dirfd, new_path, namelist, filter, compar);
     free (new_path);
 
     return ret;
