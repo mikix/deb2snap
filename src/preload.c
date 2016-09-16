@@ -141,6 +141,11 @@ redirect_path_full (const char *pathname, int check_parent, int only_if_absolute
         return strdup (pathname);
     }
 
+    // Do not redirect when accessing /dev
+    if (strcmp (pathname, "/dev") == 0 || strncmp (pathname, "/dev/", 5) == 0) {
+        return strdup (pathname);
+    }
+
     if (only_if_absolute && pathname[0] != '/') {
         return strdup (pathname);
     }
@@ -553,26 +558,30 @@ int
 connect (int sockfd, const struct sockaddr *addr, socklen_t addrlen)
 {
     int (*_connect) (int sockfd, const struct sockaddr *addr, socklen_t addrlen);
-    int result;
 
     _connect = (int (*)(int sockfd, const struct sockaddr *addr, socklen_t addrlen)) dlsym (RTLD_NEXT, "connect");
 
-    if (addr->sa_family == AF_UNIX) {
+    /* addrlen == sizeof(sa_family_t) is the case of unnamed sockets,
+     * and first byte of sun_path is 0 for abstract sockets.
+     */
+    if (addr->sa_family == AF_UNIX
+            && addrlen > sizeof(sa_family_t)
+            && ((const struct sockaddr_un *) addr)->sun_path[0] != '\0') {
+
+        const struct sockaddr_un *un_addr = (const struct sockaddr_un *) addr;
         char *new_path = NULL;
         struct sockaddr_un new_addr;
 
-        new_path = redirect_path (((const struct sockaddr_un *)addr)->sun_path);
+        new_path = redirect_path (un_addr->sun_path);
 
         new_addr.sun_family = AF_UNIX;
         strcpy (new_addr.sun_path, new_path);
         free (new_path);
 
-        result = _connect (sockfd, (const struct sockaddr *)&new_addr, sizeof(new_addr));
-    } else {
-        result = _connect (sockfd, addr, addrlen);
+        return _connect (sockfd, (const struct sockaddr *)&new_addr, sizeof(new_addr));
     }
 
-    return result;
+    return _connect (sockfd, addr, addrlen);
 }
 
 void *
