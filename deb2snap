@@ -321,7 +321,7 @@ cat > $ROOT/meta/package.yaml <<EOF
 name: $PACKAGE_NAME
 version: $VERSION
 $VENDOR
-architecture: $ARCH
+architectures: [$ARCH]
 $YAML_FRAMEWORKS
 binaries:$YAML_BINARIES
 EOF
